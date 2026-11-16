@@ -22,7 +22,7 @@ export async function render(root, { arg }) {
   root.classList.add('summary');
   root.append(...[
     h('header', { class: 'page-head' },
-      h('div', { class: 'kicker' }, 'Workout complete'),
+      h('div', { class: 'kicker' }, session.deload ? 'Deload workout complete' : 'Workout complete'),
       h('h1', { class: 'page-title' }, session.name)),
 
     h('div', { class: 'stats' },

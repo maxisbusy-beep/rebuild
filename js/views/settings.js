@@ -4,12 +4,17 @@ import { loadSettings, saveSettings, maxHr, easyZone } from '../settings.js';
 import { backupStatus } from '../backup.js';
 import { exportBackup, importBackup } from '../backup-ui.js';
 import { APP_VERSION } from '../version.js';
+import { loadDeload, saveDeload, deloadStatus, startDeload, endDeload, DELOAD_EVERY } from '../deload.js';
+import { rampActive } from '../rotation.js';
 import { h, icon, card, pageHeader, stepper, toast } from '../ui.js';
 
 export async function render(root, { refresh }) {
-  const [settings, lastBackupAt, firstUseAt, persisted] = await Promise.all([
-    loadSettings(), db.getMeta('lastBackupAt'), db.getMeta('firstUseAt'), db.isPersisted(),
+  const [settings, lastBackupAt, firstUseAt, persisted, sessions, deloadState] = await Promise.all([
+    loadSettings(), db.getMeta('lastBackupAt'), db.getMeta('firstUseAt'), db.isPersisted(), db.getAll('sessions'), loadDeload(),
   ]);
+  const now = new Date();
+  const deload = deloadStatus(sessions, deloadState, now);
+  const setDeload = async (next) => { await saveDeload(next); refresh(); };
   const backup = backupStatus(lastBackupAt, firstUseAt);
   const save = async (patch) => { await saveSettings(patch); refresh(); };
   const zone = easyZone(settings);
@@ -32,6 +37,17 @@ export async function render(root, { refresh }) {
     card('Rest timers',
       stepper({ label: 'Compounds', value: settings.restCompound, step: 15, min: 30, max: 600, unit: 's', onChange: (v) => save({ restCompound: v }) }),
       stepper({ label: 'Accessories', value: settings.restAccessory, step: 15, min: 15, max: 600, unit: 's', onChange: (v) => save({ restAccessory: v }) })),
+
+    card('Training cycle',
+      h('div', { class: 'row' },
+        h('div', { class: 'row-text' },
+          h('div', { class: 'row-label' }, deload.active ? 'Deload week' : (deload.weekNumber ? `Week ${deload.weekNumber} of ${DELOAD_EVERY}` : 'Not started')),
+          h('div', { class: 'row-hint' }, deload.active ? 'About 60% volume this week'
+            : (rampActive(sessions, now) ? 'Ramp weeks: weight increases are held back' : `A deload is suggested in week ${DELOAD_EVERY}`))),
+        deload.active
+          ? h('button', { class: 'btn small fit', onclick: () => setDeload(endDeload(deloadState, now)) }, 'End deload')
+          : h('button', { class: 'btn small fit', onclick: () => setDeload(startDeload(deloadState, now)) }, 'Deload now')),
+      h('p', { class: 'note' }, 'A deload week keeps the weights the same and cuts sets to about 60%. It does not count against your progression.')),
 
     card('Program',
       h('p', { class: 'note' }, 'Four workouts in rotation: Lower A, Upper A, Lower B, Upper B.'),

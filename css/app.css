@@ -539,7 +539,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 .btn-row .btn { padding: 0 var(--s3); }
 .btn.on { background: var(--accent-soft); border-color: rgba(200, 255, 46, 0.35); color: var(--accent); }
 .banner.good { background: var(--accent-soft); border-color: rgba(200, 255, 46, 0.3); color: var(--accent); }
-a.pill.link { color: var(--amber); border-color: rgba(255, 176, 32, 0.35); background: var(--amber-soft); min-height: 44px; }
+a.pill.due { color: var(--amber); border-color: rgba(255, 176, 32, 0.35); background: var(--amber-soft); min-height: 44px; }
 .good { color: var(--accent); }
 
 /* Fields */
@@ -642,6 +642,70 @@ a.pill.link { color: var(--amber); border-color: rgba(255, 176, 32, 0.35); backg
 .photo-full { width: 100%; max-height: 60vh; object-fit: contain; border-radius: var(--radius-sm); background: #000; }
 .photo-pick { display: flex; align-items: center; gap: var(--s3); min-height: 48px; font-size: 14px; }
 .photo-pick img { width: 64px; height: 84px; object-fit: cover; border-radius: 8px; }
+
+/* ================= Phase 4: progress, deload, polish ================= */
+
+.banner.with-action { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); }
+.banner .link { flex: none; color: inherit; }
+.card.warn .btn-row .btn:not(.primary) { background: rgba(0, 0, 0, 0.25); }
+
+/* Exercise picker */
+.picker {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s3);
+  width: 100%; min-height: 64px; padding: var(--s2) var(--s4); text-align: left;
+  border-radius: 14px; background: var(--surface-2); border: 1px solid var(--line); color: var(--faint);
+}
+.picker:active { border-color: var(--accent); }
+.picker-text { display: flex; flex-direction: column; min-width: 0; }
+.picker-name { font-size: 18px; font-weight: 800; color: var(--text); letter-spacing: -0.01em; }
+.picker-sub { font-size: 13px; color: var(--dim); }
+.sub-title { margin: var(--s2) 0 0; font-size: 15px; font-weight: 700; color: var(--text); }
+.btn.plain.on { border-color: var(--accent); color: var(--accent); }
+
+/* Bar chart */
+.ch-bar.a { fill: var(--accent); }
+.ch-bar.b { fill: var(--faint); }
+.ch-val { fill: var(--text); font-size: 12px; font-weight: 800; font-family: var(--font); }
+.ch-target { stroke: var(--dim); stroke-width: 1.5; stroke-dasharray: 4 4; }
+
+/* Muscle volume */
+.mv { display: flex; flex-direction: column; gap: 10px; }
+.mv-row { display: grid; grid-template-columns: 92px 1fr 34px; align-items: center; gap: var(--s2); }
+.mv-name { font-size: 14px; font-weight: 600; }
+.mv-track { position: relative; height: 12px; border-radius: 6px; background: var(--surface-2); }
+.mv-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px; background: var(--accent); min-width: 0; transition: width 400ms var(--ease); }
+.mv-prev { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; background: var(--text); border-radius: 1px; opacity: 0.7; }
+.mv-num { text-align: right; font-size: 15px; font-weight: 800; }
+
+/* Calendar heat-map */
+.heat { display: flex; gap: 6px; }
+.heat-days { display: grid; grid-template-rows: repeat(7, 1fr); gap: 4px; font-size: 10px; font-weight: 700; color: var(--faint); }
+.heat-days span { display: grid; place-items: center; }
+.heat-grid { flex: 1; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; }
+.heat-col { display: grid; grid-template-rows: repeat(7, 1fr); gap: 4px; }
+.heat-cell { display: block; aspect-ratio: 1; border-radius: 4px; background: var(--surface-2); }
+.heat-cell.lift { background: var(--accent); }
+.heat-cell.bike { background: var(--faint); }
+.heat-cell.both { background: linear-gradient(135deg, var(--accent) 50%, var(--faint) 50%); }
+.heat-cell.restday { background: var(--surface-2); box-shadow: inset 0 0 0 2px var(--line); }
+.heat-cell.future { background: transparent; box-shadow: inset 0 0 0 1px var(--line); opacity: 0.5; }
+.heat-legend { display: flex; flex-wrap: wrap; gap: var(--s3); font-size: 12px; color: var(--dim); }
+.heat-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.heat-legend .heat-cell { width: 12px; height: 12px; aspect-ratio: auto; }
+
+/* Records and shoulder report */
+.rec-list { display: flex; flex-direction: column; }
+.rec { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); padding: 10px 0; border-top: 1px solid var(--line); }
+.rec-name { font-size: 15px; font-weight: 600; min-width: 0; }
+.rec-val { flex: none; display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.rec-main { font-size: 16px; font-weight: 800; }
+.rec-sub { font-size: 12px; color: var(--dim); }
+
+/* Polish */
+.card-title + .rec-list .rec:first-child, .card-title + .prog-list .prog-item:first-child, .card-title + .rx-list li:first-child { border-top: 0; }
+.next-name + .rx-list li:first-child { border-top: 0; }
+#view { scroll-behavior: auto; }
+::selection { background: var(--accent); color: var(--accent-ink); }
 
 noscript { position: fixed; inset: 0; display: grid; place-items: center; padding: var(--s5); text-align: center; }
 

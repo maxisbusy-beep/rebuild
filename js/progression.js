@@ -6,10 +6,11 @@ export const STALL_SESSIONS = 3;
 /**
  * Past performances of one exercise, oldest first.
  * Returns [{ date, sets: [{ weight, reps, rir }] }] using only completed sets of finished workouts.
+ * Deload-week sessions are skipped (they would look like a stall) unless { all: true }.
  */
-export function performances(sessions, exId) {
+export function performances(sessions, exId, { all = false } = {}) {
   return sessions
-    .filter((s) => s.type === 'lift' && s.finishedAt)
+    .filter((s) => s.type === 'lift' && s.finishedAt && (all || !s.deload))
     .sort((a, b) => a.startedAt - b.startedAt)
     .map((s) => {
       const e = (s.exercises || []).find((x) => x.exId === exId);

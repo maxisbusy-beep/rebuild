@@ -3,15 +3,19 @@ import { EXERCISES } from './exercises.js';
 import { performances, suggest, prefillSets } from './progression.js';
 import { exercisePRs } from './records.js';
 import { ymd } from './dates.js';
+import { deloadSets } from './deload.js';
 
 /** The program-item view of a session exercise. */
 export const itemOf = (e) => ({ exId: e.exId, sets: e.planned, repMin: e.repMin, repMax: e.repMax });
 
 /** One exercise entry for a new session, pre-filled from history. */
-export function buildExercise(item, sessions, { ramp = false } = {}) {
+export function buildExercise(item, sessions, { ramp = false, deload = false } = {}) {
   const ex = EXERCISES[item.exId];
   const history = performances(sessions, item.exId);
-  const suggestion = suggest(ex, item, history, { ramp });
+  // Deload: fewer sets, last session's weights, no progression, at least 3 reps in reserve.
+  if (deload) item = { ...item, sets: deloadSets(item.sets) };
+  const suggestion = deload ? { action: 'hold', weight: null } : suggest(ex, item, history, { ramp });
+  if (deload) ramp = true;
   return {
     exId: item.exId,
     name: ex.name,
@@ -24,7 +28,7 @@ export function buildExercise(item, sessions, { ramp = false } = {}) {
 }
 
 /** A new, unfinished session for the given workout. */
-export function buildSession(program, key, sessions, { ramp = false, now = Date.now() } = {}) {
+export function buildSession(program, key, sessions, { ramp = false, deload = false, now = Date.now() } = {}) {
   const w = program.workouts[key];
   return {
     type: 'lift',
@@ -33,7 +37,8 @@ export function buildSession(program, key, sessions, { ramp = false, now = Date.
     date: ymd(new Date(now)),
     startedAt: now,
     finishedAt: null,
-    exercises: w.items.map((it) => buildExercise(it, sessions, { ramp })),
+    exercises: w.items.map((it) => buildExercise(it, sessions, { ramp, deload })),
+    deload,
     feel: null,
     note: '',
   };

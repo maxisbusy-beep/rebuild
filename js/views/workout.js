@@ -11,6 +11,7 @@ import { fmtClock, setLabel, setsLabel } from '../format.js';
 import { prettyDate, parseYmd } from '../dates.js';
 import { h, icon, sheet, toast, stepper, segmented } from '../ui.js';
 import { RAMP_TEXT } from './today.js';
+import { DELOAD_TEXT } from '../deload.js';
 
 // Rest timer state lives outside render() so it survives screen refreshes.
 let rest = null; // { endsAt, total, firedAt }
@@ -92,7 +93,7 @@ export async function render(root, { refresh }) {
   root.classList.add('workout');
   root.append(...[
     topbar,
-    ramp ? h('div', { class: 'banner' }, RAMP_TEXT) : null,
+    session.deload ? h('div', { class: 'banner good' }, DELOAD_TEXT) : (ramp ? h('div', { class: 'banner' }, RAMP_TEXT) : null),
     ...cards,
     h('button', { class: `btn big ${open === 0 ? 'primary' : ''}`.trim(), onclick: finish }, 'Finish workout'),
     h('button', { class: 'btn ghost', onclick: discard }, 'Discard workout'),
@@ -111,7 +112,9 @@ export async function render(root, { refresh }) {
     const ex = EXERCISES[e.exId];
     const history = performances(sessions.filter((s) => s.id !== session.id), e.exId);
     const last = history[history.length - 1];
-    const tip = suggest(ex, itemOf(e), history, { ramp });
+    const tip = session.deload
+      ? { action: 'hold', text: 'Deload: same weight as last time, fewer sets, stop 3+ reps short.' }
+      : suggest(ex, itemOf(e), history, { ramp });
     const allDone = e.sets.length > 0 && e.sets.every((s) => s.done);
 
     return h('section', { class: `card ex ${allDone ? 'complete' : ''}`.trim() },
@@ -156,6 +159,7 @@ export async function render(root, { refresh }) {
     const e = session.exercises[ei], s = e.sets[si];
     s.done = !s.done;
     s.at = s.done ? Date.now() : null;
+    if (s.done && navigator.vibrate) navigator.vibrate(15);
     if (s.done) startRest(EXERCISES[e.exId].kind === 'compound' ? settings.restCompound : settings.restAccessory);
     await commit();
   }
@@ -226,7 +230,7 @@ export async function render(root, { refresh }) {
     session.exercises[ei] = buildExercise({
       exId: pick, sets: e.planned,
       repMin: keep ? e.repMin : to.def.repMin, repMax: keep ? e.repMax : to.def.repMax,
-    }, sessions.filter((s) => s.id !== session.id), { ramp });
+    }, sessions.filter((s) => s.id !== session.id), { ramp, deload: !!session.deload });
     return commit();
   }
 

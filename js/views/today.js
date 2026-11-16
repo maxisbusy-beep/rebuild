@@ -12,6 +12,7 @@ import { doneSetCount } from '../session.js';
 import { loadSettings } from '../settings.js';
 import { checkinDue } from '../body.js';
 import { checkinCards } from './checkins.js';
+import { loadDeload, saveDeload, deloadStatus, startDeload, endDeload, skipDeload, DELOAD_TEXT } from '../deload.js';
 import { h, icon, ring, card, pageHeader, pill } from '../ui.js';
 
 export const RAMP_TEXT = 'Ramp weeks: keep 3+ reps in reserve, tendons adapt slower than muscle.';
@@ -22,6 +23,7 @@ export async function render(root, { refresh }) {
     loadProgram(), restLoggedToday(), loadSettings(), db.getAll('body'),
   ]);
   const checkins = await checkinCards(refresh, settings);
+  const deloadState = await loadDeload();
   const now = new Date();
   const week = weekStats(sessions, bike, now);
   const backup = backupStatus(lastBackupAt, firstUseAt, now.getTime());
@@ -32,6 +34,8 @@ export async function render(root, { refresh }) {
   const level = gapLevel(gap);
   const streak = weekStreak(sessions, now);
   const ramp = rampActive(sessions, now);
+  const deload = deloadStatus(sessions, deloadState, now);
+  const setDeload = async (next) => { await saveDeload(next); refresh(); };
 
   const start = async () => { await startWorkout(nextKey); location.hash = '#workout'; };
 
@@ -67,9 +71,20 @@ export async function render(root, { refresh }) {
     h('div', { class: 'pills' },
       pill('clock', gap === null ? 'No sessions yet' : `Last session ${agoLabel(gap)}`, level === 'ok' ? '' : level),
       pill('flame', streak === 0 ? 'No week streak yet' : `${streak} week streak`, streak > 0 ? 'good' : ''),
-      checkinDue(bodyEntries, now) ? h('a', { class: 'pill link', href: '#body' }, icon('scale'), h('span', {}, 'Weekly check-in due')) : null),
+      checkinDue(bodyEntries, now) ? h('a', { class: 'pill due', href: '#body' }, icon('scale'), h('span', {}, 'Weekly check-in due')) : null),
 
     ramp ? h('div', { class: 'banner' }, RAMP_TEXT) : null,
+
+    deload.active ? h('div', { class: 'banner good with-action' },
+      h('span', {}, DELOAD_TEXT),
+      active ? null : h('button', { class: 'link', onclick: () => setDeload(endDeload(deloadState, now)) }, 'End deload')) : null,
+
+    deload.due ? h('section', { class: 'card warn' },
+      h('div', { class: 'warn-head' }, icon('alert'), h('h2', { class: 'card-title' }, `Week ${deload.weekNumber}: deload suggested`)),
+      h('p', { class: 'dim' }, 'You have trained for six weeks or more since your last easy week. A week at about 60% volume lets joints and tendons catch up.'),
+      h('div', { class: 'btn-row' },
+        h('button', { class: 'btn primary', onclick: () => setDeload(startDeload(deloadState, now)) }, 'Start deload'),
+        h('button', { class: 'btn', onclick: () => setDeload(skipDeload(deloadState, now)) }, 'Not this week'))) : null,
 
     workoutCard,
 

@@ -4,6 +4,40 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 const dayLabel = (t) => { const d = new Date(t); return `${d.getDate()} ${MONTHS[d.getMonth()]}`; };
 const trim = (v) => String(Number(v.toFixed(1)));
 
+/**
+ * Stacked bar chart, one bar per week.
+ * bars: [{ t, a, b }] where a is drawn in the accent colour and b stacked on top in grey.
+ * target: optional dashed line (for example 4 lifting sessions).
+ */
+export function barChart({ bars, target = null, width = 340, height = 170, label = 'Chart' }) {
+  if (!bars.length) return '';
+  const pad = { l: 24, r: 8, t: 14, b: 24 };
+  const w = width - pad.l - pad.r, h = height - pad.t - pad.b;
+  const top = Math.max(1, target || 0, ...bars.map((b) => b.a + b.b));
+  const max = top + 1;
+  const slot = w / bars.length, bw = Math.min(26, slot * 0.62);
+  const y = (v) => pad.t + (1 - v / max) * h;
+  const f = (n) => n.toFixed(1);
+  const base = pad.t + h;
+
+  const cols = bars.map((b, i) => {
+    const cx = pad.l + slot * (i + 0.5), x = cx - bw / 2;
+    const ya = y(b.a), yb = y(b.a + b.b);
+    const total = b.a + b.b;
+    return (b.a > 0 ? `<rect class="ch-bar a" x="${f(x)}" y="${f(ya)}" width="${f(bw)}" height="${f(base - ya)}" rx="3"/>` : '')
+      + (b.b > 0 ? `<rect class="ch-bar b" x="${f(x)}" y="${f(yb)}" width="${f(bw)}" height="${f(ya - yb)}" rx="3"/>` : '')
+      + (total > 0 ? `<text class="ch-val" x="${f(cx)}" y="${f(yb - 4)}" text-anchor="middle">${total}</text>` : '')
+      + (i === 0 || i === bars.length - 1 || bars.length <= 4
+        ? `<text class="ch-x" x="${f(cx)}" y="${height - 6}" text-anchor="middle">${dayLabel(b.t)}</text>` : '');
+  }).join('');
+
+  const line = target
+    ? `<line class="ch-target" x1="${pad.l}" x2="${width - pad.r}" y1="${f(y(target))}" y2="${f(y(target))}"/>`
+      + `<text class="ch-y" x="${pad.l - 6}" y="${f(y(target) + 4)}" text-anchor="end">${target}</text>` : '';
+  const axis = `<line class="ch-grid" x1="${pad.l}" x2="${width - pad.r}" y1="${f(base)}" y2="${f(base)}"/>`;
+  return `<svg class="chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${label}">${axis}${line}${cols}</svg>`;
+}
+
 /** Value range padded so the line never touches the frame; flat data gets a sensible band. */
 export function yRange(values) {
   let lo = Math.min(...values), hi = Math.max(...values);

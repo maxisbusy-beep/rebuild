@@ -48,7 +48,7 @@ async function renderLifts(root, refresh) {
         h('div', { class: 'log-date' }, dayLine(s.date)),
         h('div', { class: 'log-name' }, s.name),
         h('div', { class: 'log-meta' }, [
-          fmtDuration(s.durationSec || 0), `${fmtInt(s.volume || 0)} kg`,
+          s.deload ? 'deload' : null, fmtDuration(s.durationSec || 0), `${fmtInt(s.volume || 0)} kg`,
           prs ? `${prs} record${prs === 1 ? '' : 's'}` : null, s.feel ? `feel ${s.feel}/5` : null,
         ].filter(Boolean).join(' · '))),
       icon('chevron', 'log-chev'));
