@@ -6,22 +6,39 @@ import * as log from './views/log.js';
 import * as progress from './views/progress.js';
 import * as body from './views/body.js';
 import * as settings from './views/settings.js';
+import * as program from './views/program.js';
+import * as workout from './views/workout.js';
+import * as summary from './views/summary.js';
 
 const TABS = [
-  { id: 'today', label: 'Today', view: today },
-  { id: 'log', label: 'Log', view: log },
-  { id: 'progress', label: 'Progress', view: progress },
-  { id: 'body', label: 'Body', view: body },
-  { id: 'settings', label: 'Settings', view: settings },
+  { id: 'today', label: 'Today' },
+  { id: 'log', label: 'Log' },
+  { id: 'progress', label: 'Progress' },
+  { id: 'body', label: 'Body' },
+  { id: 'settings', label: 'Settings' },
 ];
+
+// tab: which tab is highlighted; null hides the tab bar (full-screen flows).
+const ROUTES = {
+  today: { view: today, tab: 'today', title: 'Rebuild' },
+  log: { view: log, tab: 'log', title: 'Log' },
+  progress: { view: progress, tab: 'progress', title: 'Progress' },
+  body: { view: body, tab: 'body', title: 'Body' },
+  settings: { view: settings, tab: 'settings', title: 'Settings' },
+  program: { view: program, tab: 'settings', title: 'Program' },
+  workout: { view: workout, tab: null, title: 'Workout' },
+  summary: { view: summary, tab: null, title: 'Summary' },
+};
 
 const viewEl = document.getElementById('view');
 const tabsEl = document.getElementById('tabs');
 let renderToken = 0;
+let cleanup = null;
 
-function currentTab() {
-  const id = location.hash.replace(/^#\/?/, '').split('/')[0];
-  return TABS.find((t) => t.id === id) || TABS[0];
+function currentRoute() {
+  const [id, arg] = location.hash.replace(/^#\/?/, '').split('/');
+  const known = ROUTES[id] ? id : 'today';
+  return { id: known, arg: arg || null, ...ROUTES[known] };
 }
 
 function buildTabs() {
@@ -31,36 +48,47 @@ function buildTabs() {
       h('span', { class: 'tab-label' }, t.label))));
 }
 
-/** Render the tab named in the URL. Exposed so views can ask for a refresh. */
+/** Render the screen named in the URL. Views call this (as `refresh`) after changing data. */
 export async function render() {
-  const tab = currentTab();
+  const route = currentRoute();
   const token = ++renderToken;
-  for (const a of tabsEl.children) {
-    const on = a.dataset.tab === tab.id;
-    a.classList.toggle('active', on);
-    if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
-  }
   const page = h('div', { class: 'page' });
+  let nextCleanup = null;
   try {
-    await tab.view.render(page, { refresh: render });
+    nextCleanup = await route.view.render(page, { refresh: render, arg: route.arg });
   } catch (err) {
     console.error(err);
     page.replaceChildren(h('div', { class: 'card' },
       h('h2', { class: 'card-title' }, 'Something went wrong'),
       h('p', { class: 'dim' }, 'Close and reopen the app. Your data is safe.')));
   }
-  if (token !== renderToken) return; // a newer navigation won
-  const sameTab = viewEl.dataset.tab === tab.id;
-  const scroll = sameTab ? viewEl.scrollTop : 0;
-  if (!sameTab) page.classList.add('enter');
-  viewEl.dataset.tab = tab.id;
+  if (token !== renderToken) { // a newer navigation won
+    if (typeof nextCleanup === 'function') nextCleanup();
+    return;
+  }
+  if (typeof cleanup === 'function') cleanup();
+  cleanup = nextCleanup;
+
+  tabsEl.hidden = !route.tab;
+  for (const a of tabsEl.children) {
+    const on = a.dataset.tab === route.tab;
+    a.classList.toggle('active', on);
+    if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+  }
+  const key = route.arg ? `${route.id}/${route.arg}` : route.id;
+  const same = viewEl.dataset.route === key;
+  const scroll = same ? viewEl.scrollTop : 0;
+  if (!same) page.classList.add('enter');
+  viewEl.dataset.route = key;
   viewEl.replaceChildren(page);
   viewEl.scrollTop = scroll;
-  document.title = tab.id === 'today' ? 'Rebuild' : `${tab.label} · Rebuild`;
+  document.title = route.id === 'today' ? 'Rebuild' : `${route.title} · Rebuild`;
 }
 
 async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
+  // On the local preview server, skip the offline cache so edits show up immediately.
+  if (['localhost', '127.0.0.1'].includes(location.hostname) && !location.search.includes('sw=1')) return;
   const hadController = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     // First install also fires this; only announce genuine updates.
@@ -90,10 +118,10 @@ async function boot() {
     return;
   }
   window.addEventListener('hashchange', render);
-  // Refresh when the app comes back to the foreground (new day, new week).
+  // Refresh when the app comes back to the foreground (new day, new week), unless the user is mid-edit.
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && !document.querySelector('.sheet-wrap')
-      && !(document.activeElement && document.activeElement.tagName === 'INPUT')) render();
+    const editing = document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName);
+    if (document.visibilityState === 'visible' && !document.querySelector('.sheet-wrap') && !editing) render();
   });
   await render();
   registerServiceWorker();

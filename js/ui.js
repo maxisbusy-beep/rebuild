@@ -34,6 +34,14 @@ export const ICONS = {
   upload: svg('<path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 20h16"/>'),
   shield: svg('<path d="M12 3 4.5 6v5.5c0 4.5 3.2 8 7.5 9.5 4.3-1.500 7.500-5 7.500-9.500V6z"/><path d="m9 12 2.200 2.200L15.500 10"/>'),
   alert: svg('<path d="M12 4 2.500 20h19z"/><path d="M12 10v4.500M12 17.500h.010"/>'),
+  check: svg('<path d="m5 12.5 4.5 4.5L19 7.5"/>', 'stroke-width="2.6"'),
+  swap: svg('<path d="M4 8h14"/><path d="m14 4 4 4-4 4"/><path d="M20 16H6"/><path d="m10 12-4 4 4 4"/>'),
+  back: svg('<path d="m14 5-7 7 7 7"/>'),
+  chevron: svg('<path d="m9 5 7 7-7 7"/>'),
+  flame: svg('<path d="M12 3c1 3.500 5 5.500 5 10a5 5 0 0 1-10 0c0-2 1-3.500 2-4.500.500 1.500 1.500 2 2 2C11 8 10.500 5.500 12 3z"/>'),
+  clock: svg('<circle cx="12" cy="12" r="8.500"/><path d="M12 7.500V12l3 2"/>'),
+  trophy: svg('<path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3"/><path d="M12 14v4M8.500 20h7"/>'),
+  moon: svg('<path d="M19.500 14.500A8 8 0 0 1 9.500 4.500a8 8 0 1 0 10 10z"/>'),
   minus: svg('<path d="M6 12h12"/>'),
   plus: svg('<path d="M12 6v12M6 12h12"/>'),
   barbell: svg('<path d="M2.500 12h19"/><path d="M6 7v10M9 5v14M15 5v14M18 7v10"/>'),
@@ -128,8 +136,7 @@ export function stepper({ label, hint, value, step = 1, min = 0, max = 999, unit
   });
   const set = (v, fromInput = false) => {
     if (!Number.isFinite(v)) v = current;
-    v = Math.max(min, Math.min(max, Math.round(v / step) * step));
-    v = Number(v.toFixed(2));
+    v = Number(Math.max(min, Math.min(max, v)).toFixed(2));
     if (!fromInput || String(v) !== input.value) input.value = String(v);
     if (v !== current) { current = v; onChange && onChange(v); }
   };
@@ -161,4 +168,37 @@ export function pageHeader(title, kicker) {
 
 export function card(title, ...kids) {
   return h('section', { class: 'card' }, title ? h('h2', { class: 'card-title' }, title) : null, ...kids);
+}
+
+/**
+ * Row of mutually exclusive choice buttons.
+ * options: [{ label, value, tone? }]; onChange(value) fires on tap (tapping the active one again clears it if allowNone).
+ */
+export function segmented({ options, value, onChange, label, allowNone = false, cls = '' }) {
+  let current = value;
+  const wrap = h('div', { class: `seg ${cls}`.trim(), role: 'radiogroup', 'aria-label': label || null });
+  const paint = () => {
+    for (const b of wrap.children) {
+      const on = b.dataset.v === String(current);
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-checked', on ? 'true' : 'false');
+    }
+  };
+  for (const o of options) {
+    wrap.append(h('button', {
+      class: `seg-btn ${o.tone || ''}`.trim(), role: 'radio', 'data-v': String(o.value),
+      onclick: () => {
+        current = allowNone && current === o.value ? null : o.value;
+        paint();
+        onChange && onChange(current);
+      },
+    }, o.label));
+  }
+  paint();
+  return wrap;
+}
+
+/** Small labelled status pill. tone: '' | 'good' | 'amber' | 'red' */
+export function pill(iconName, text, tone = '') {
+  return h('div', { class: `pill ${tone}`.trim() }, iconName ? icon(iconName) : null, h('span', {}, text));
 }

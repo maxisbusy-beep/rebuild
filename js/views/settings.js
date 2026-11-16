@@ -33,6 +33,10 @@ export async function render(root, { refresh }) {
       stepper({ label: 'Compounds', value: settings.restCompound, step: 15, min: 30, max: 600, unit: 's', onChange: (v) => save({ restCompound: v }) }),
       stepper({ label: 'Accessories', value: settings.restAccessory, step: 15, min: 15, max: 600, unit: 's', onChange: (v) => save({ restAccessory: v }) })),
 
+    card('Program',
+      h('p', { class: 'note' }, 'Four workouts in rotation: Lower A, Upper A, Lower B, Upper B.'),
+      h('a', { class: 'btn', href: '#program' }, 'Edit program')),
+
     card('Backup',
       h('p', { class: `note ${backup.nudge ? 'amber' : ''}`.trim() },
         'Last backup: ', h('strong', {}, backup.label), '. Your data is stored only on this phone, so export a backup regularly and keep the file somewhere safe (Google Drive or email it to yourself).'),

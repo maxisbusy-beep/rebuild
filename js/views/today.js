@@ -1,18 +1,53 @@
-// Today: the week at a glance and backup status. Workout, bike and check-in cards arrive in later phases.
+// Today: next workout in the rotation, the week at a glance, backup status.
 import * as db from '../db.js';
 import { backupStatus } from '../backup.js';
 import { weekStats, TARGETS } from '../week.js';
-import { weekdayName, prettyDate } from '../dates.js';
+import { weekdayName, prettyDate, agoLabel } from '../dates.js';
 import { exportBackup } from '../backup-ui.js';
-import { h, icon, ring, card, pageHeader } from '../ui.js';
+import { loadProgram, rxLabel } from '../program.js';
+import { EXERCISES } from '../exercises.js';
+import { nextWorkoutKey, daysSinceLast, gapLevel, weekStreak, rampActive } from '../rotation.js';
+import { startWorkout, setRestDay, restLoggedToday } from '../session-store.js';
+import { doneSetCount } from '../session.js';
+import { h, icon, ring, card, pageHeader, pill } from '../ui.js';
+
+export const RAMP_TEXT = 'Ramp weeks: keep 3+ reps in reserve, tendons adapt slower than muscle.';
 
 export async function render(root, { refresh }) {
-  const [sessions, bike, lastBackupAt, firstUseAt] = await Promise.all([
+  const [sessions, bike, lastBackupAt, firstUseAt, program, restToday] = await Promise.all([
     db.getAll('sessions'), db.getAll('bike'), db.getMeta('lastBackupAt'), db.getMeta('firstUseAt'),
+    loadProgram(), restLoggedToday(),
   ]);
   const now = new Date();
   const week = weekStats(sessions, bike, now);
   const backup = backupStatus(lastBackupAt, firstUseAt, now.getTime());
+  const active = sessions.find((s) => s.type === 'lift' && !s.finishedAt);
+  const nextKey = nextWorkoutKey(program.order, sessions);
+  const next = program.workouts[nextKey];
+  const gap = daysSinceLast(sessions, bike, now);
+  const level = gapLevel(gap);
+  const streak = weekStreak(sessions, now);
+  const ramp = rampActive(sessions, now);
+
+  const start = async () => { await startWorkout(nextKey); location.hash = '#workout'; };
+
+  const workoutCard = active
+    ? h('section', { class: 'card next' },
+      h('div', { class: 'kicker' }, 'In progress'),
+      h('div', { class: 'next-name' }, active.name),
+      h('p', { class: 'dim' }, `${doneSetCount(active)} sets logged so far.`),
+      h('a', { class: 'btn primary big', href: '#workout' }, 'Resume workout'))
+    : h('section', { class: 'card next' },
+      h('div', { class: 'kicker' }, 'Next workout'),
+      h('div', { class: 'next-name' }, next.name),
+      h('ul', { class: 'rx-list' }, next.items.map((it) =>
+        h('li', {}, h('span', { class: 'rx-name' }, EXERCISES[it.exId].name), h('span', { class: 'rx-sets' }, rxLabel(it))))),
+      h('button', { class: 'btn primary big', onclick: start }, 'Start'),
+      restToday
+        ? h('div', { class: 'rest-logged' },
+          h('span', {}, icon('moon'), 'Rest day logged'),
+          h('button', { class: 'btn ghost small inline', onclick: async () => { await setRestDay(false); refresh(); } }, 'Undo'))
+        : h('button', { class: 'btn', onclick: async () => { await setRestDay(true); refresh(); } }, icon('moon'), 'Rest day'));
 
   const parts = [
     pageHeader(weekdayName(now), prettyDate(now)),
@@ -24,16 +59,19 @@ export async function render(root, { refresh }) {
         : `Your last backup was ${backup.label}. Your data exists only on this phone.`),
       h('button', { class: 'btn primary', onclick: async () => { await exportBackup(); refresh(); } }, icon('download'), 'Back up now')) : null,
 
+    h('div', { class: 'pills' },
+      pill('clock', gap === null ? 'No sessions yet' : `Last session ${agoLabel(gap)}`, level === 'ok' ? '' : level),
+      pill('flame', streak === 0 ? 'No week streak yet' : `${streak} week streak`, streak > 0 ? 'good' : '')),
+
+    ramp ? h('div', { class: 'banner' }, RAMP_TEXT) : null,
+
+    workoutCard,
+
     card('This week',
       h('div', { class: 'rings' },
         ring({ value: week.lifts, target: TARGETS.lifts, big: week.lifts, label: 'Lifting', sub: `of ${TARGETS.lifts}` }),
         ring({ value: week.rides, target: TARGETS.ridesMin, big: week.rides, label: 'Bike', sub: `of ${TARGETS.ridesMin}–${TARGETS.ridesMax}` }),
         ring({ value: week.minutes, target: TARGETS.cardioMin, big: week.minutes, label: 'Cardio min', sub: `of ${TARGETS.cardioMin}–${TARGETS.cardioMax}` }))),
-
-    h('section', { class: 'card next' },
-      h('div', { class: 'kicker' }, 'Next workout'),
-      h('div', { class: 'next-name' }, 'Lower A'),
-      h('p', { class: 'dim' }, 'Workout logging is the next thing being built. This card will carry the Start button.')),
 
     backup.nudge ? null : h('a', { class: 'status-line', href: '#settings' },
       icon('shield'),
