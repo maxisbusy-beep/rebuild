@@ -533,6 +533,116 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 .prog-name { font-size: 16px; font-weight: 600; color: var(--text); }
 .prog-rx { font-size: 14px; color: var(--dim); }
 
+/* ================= Phase 3: bike, check-ins, body ================= */
+
+.btn-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: var(--s2); }
+.btn-row .btn { padding: 0 var(--s3); }
+.btn.on { background: var(--accent-soft); border-color: rgba(200, 255, 46, 0.35); color: var(--accent); }
+.banner.good { background: var(--accent-soft); border-color: rgba(200, 255, 46, 0.3); color: var(--accent); }
+a.pill.link { color: var(--amber); border-color: rgba(255, 176, 32, 0.35); background: var(--amber-soft); min-height: 44px; }
+.good { color: var(--accent); }
+
+/* Fields */
+.row.field { cursor: text; }
+.num-wrap { display: flex; align-items: baseline; gap: 4px; flex: none; }
+.num-input {
+  width: 96px; height: var(--tap);
+  padding: 0 var(--s3);
+  text-align: right;
+  font-size: 24px; font-weight: 800; letter-spacing: -0.01em;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px;
+}
+.num-input::placeholder { color: var(--faint); font-weight: 600; }
+.num-input:focus, .date-input:focus, .text-input:focus { border-color: var(--accent); outline: none; }
+.date-input, .text-input {
+  height: var(--tap); padding: 0 var(--s3);
+  font-size: 16px; font-weight: 600;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px;
+  color-scheme: dark;
+}
+.text-input { width: 100%; }
+.text-input::placeholder { color: var(--faint); font-weight: 400; }
+.field-col { display: flex; flex-direction: column; gap: var(--s2); }
+.edit-set .field-col { border-top: 1px solid var(--line); padding-top: var(--s3); }
+
+/* Protein tally and progress bar */
+.tally { display: flex; align-items: baseline; gap: var(--s2); flex-wrap: wrap; }
+.tally-num { font-size: 56px; line-height: 1; font-weight: 800; letter-spacing: -0.04em; }
+.tally-of { font-size: 18px; font-weight: 700; color: var(--dim); }
+.tally-left { margin-left: auto; font-size: 14px; font-weight: 700; color: var(--dim); }
+.tally-left.good { color: var(--accent); }
+.bar { height: 10px; border-radius: 5px; background: var(--surface-2); overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 5px; background: var(--accent); transform-origin: left; transition: transform 400ms var(--ease); opacity: 0.75; }
+.bar.full .bar-fill { opacity: 1; }
+
+.chips { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.chip {
+  min-height: 52px; min-width: 64px; padding: 0 var(--s4);
+  border-radius: 14px; background: var(--surface-2); border: 1px solid var(--line);
+  font-size: 16px; font-weight: 700;
+  transition: transform 100ms var(--ease), background 120ms;
+}
+.chip.strong { flex: 1; font-size: 20px; font-weight: 800; color: var(--accent); }
+.chip:active { transform: scale(0.95); background: var(--accent-soft); }
+.link-row { display: flex; justify-content: space-between; align-items: center; gap: var(--s3); }
+.link { min-height: 48px; padding: 0 var(--s1); font-size: 14px; font-weight: 600; color: var(--dim); text-decoration: underline; text-underline-offset: 3px; }
+
+/* Habit ticks */
+.check-row {
+  display: flex; align-items: center; gap: var(--s3);
+  width: 100%; min-height: 64px; padding: var(--s2) 0; text-align: left;
+}
+.check-row + .check-row, .check-row + .row { border-top: 1px solid var(--line); }
+.check-row + .row { padding-top: var(--s3); }
+.check-box {
+  flex: none; width: 40px; height: 40px; border-radius: 12px;
+  display: grid; place-items: center;
+  background: var(--surface-2); border: 2px solid var(--line); color: transparent;
+  transition: background 160ms var(--ease), border-color 160ms, color 160ms, transform 100ms var(--ease);
+}
+.check-row:active .check-box { transform: scale(0.9); }
+.check-row.on .check-box { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.check-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.check-label { font-size: 17px; font-weight: 700; }
+.check-sub { font-size: 13px; color: var(--dim); }
+.check-streak {
+  flex: none; padding: 4px 10px; border-radius: 999px;
+  font-size: 13px; font-weight: 700; color: var(--accent); background: var(--accent-soft);
+}
+
+/* Stopwatch */
+.watch-clock { font-size: 72px; line-height: 1; font-weight: 800; letter-spacing: -0.04em; text-align: center; padding: var(--s2) 0; color: var(--dim); }
+.watch-clock.running { color: var(--accent); }
+.page.form .wk-clock { font-size: 22px; }
+
+/* Charts */
+.chart-wrap { margin: 0 calc(var(--s1) * -1); }
+.chart { display: block; width: 100%; height: auto; }
+.ch-grid { stroke: var(--line); stroke-width: 1; }
+.ch-y, .ch-x { fill: var(--faint); font-size: 11px; font-weight: 600; font-family: var(--font); }
+.ch-line { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.ch-line.line { stroke: var(--accent); stroke-width: 3; }
+.ch-line.faint { stroke: var(--faint); stroke-width: 1.5; opacity: 0.6; }
+.ch-dot.line { fill: var(--accent); }
+.ch-dot.faint, .ch-dot.dots { fill: var(--faint); }
+.chart-legend { font-size: 12px; color: var(--faint); }
+
+/* Body */
+.guide { font-weight: 700; }
+.guide.amber { color: var(--amber); }
+.guide.good { color: var(--accent); }
+.photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s2); }
+.photo { position: relative; aspect-ratio: 3 / 4; border-radius: var(--radius-sm); overflow: hidden; background: var(--surface-2); }
+.photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo-date {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 6px 5px;
+  font-size: 12px; font-weight: 700; text-align: center;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.75));
+}
+.photo-full { width: 100%; max-height: 60vh; object-fit: contain; border-radius: var(--radius-sm); background: #000; }
+.photo-pick { display: flex; align-items: center; gap: var(--s3); min-height: 48px; font-size: 14px; }
+.photo-pick img { width: 64px; height: 84px; object-fit: cover; border-radius: 8px; }
+
 noscript { position: fixed; inset: 0; display: grid; place-items: center; padding: var(--s5); text-align: center; }
 
 @media (prefers-reduced-motion: reduce) {

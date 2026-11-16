@@ -9,15 +9,19 @@ import { EXERCISES } from '../exercises.js';
 import { nextWorkoutKey, daysSinceLast, gapLevel, weekStreak, rampActive } from '../rotation.js';
 import { startWorkout, setRestDay, restLoggedToday } from '../session-store.js';
 import { doneSetCount } from '../session.js';
+import { loadSettings } from '../settings.js';
+import { checkinDue } from '../body.js';
+import { checkinCards } from './checkins.js';
 import { h, icon, ring, card, pageHeader, pill } from '../ui.js';
 
 export const RAMP_TEXT = 'Ramp weeks: keep 3+ reps in reserve, tendons adapt slower than muscle.';
 
 export async function render(root, { refresh }) {
-  const [sessions, bike, lastBackupAt, firstUseAt, program, restToday] = await Promise.all([
+  const [sessions, bike, lastBackupAt, firstUseAt, program, restToday, settings, bodyEntries] = await Promise.all([
     db.getAll('sessions'), db.getAll('bike'), db.getMeta('lastBackupAt'), db.getMeta('firstUseAt'),
-    loadProgram(), restLoggedToday(),
+    loadProgram(), restLoggedToday(), loadSettings(), db.getAll('body'),
   ]);
+  const checkins = await checkinCards(refresh, settings);
   const now = new Date();
   const week = weekStats(sessions, bike, now);
   const backup = backupStatus(lastBackupAt, firstUseAt, now.getTime());
@@ -43,11 +47,12 @@ export async function render(root, { refresh }) {
       h('ul', { class: 'rx-list' }, next.items.map((it) =>
         h('li', {}, h('span', { class: 'rx-name' }, EXERCISES[it.exId].name), h('span', { class: 'rx-sets' }, rxLabel(it))))),
       h('button', { class: 'btn primary big', onclick: start }, 'Start'),
-      restToday
-        ? h('div', { class: 'rest-logged' },
-          h('span', {}, icon('moon'), 'Rest day logged'),
-          h('button', { class: 'btn ghost small inline', onclick: async () => { await setRestDay(false); refresh(); } }, 'Undo'))
-        : h('button', { class: 'btn', onclick: async () => { await setRestDay(true); refresh(); } }, icon('moon'), 'Rest day'));
+      h('div', { class: 'btn-row' },
+        h('a', { class: 'btn', href: '#bike' }, icon('bike'), 'Bike instead'),
+        h('button', {
+          class: `btn ${restToday ? 'on' : ''}`.trim(), 'aria-pressed': restToday ? 'true' : 'false',
+          onclick: async () => { await setRestDay(!restToday); refresh(); },
+        }, icon('moon'), restToday ? 'Rest logged' : 'Rest day')));
 
   const parts = [
     pageHeader(weekdayName(now), prettyDate(now)),
@@ -61,11 +66,14 @@ export async function render(root, { refresh }) {
 
     h('div', { class: 'pills' },
       pill('clock', gap === null ? 'No sessions yet' : `Last session ${agoLabel(gap)}`, level === 'ok' ? '' : level),
-      pill('flame', streak === 0 ? 'No week streak yet' : `${streak} week streak`, streak > 0 ? 'good' : '')),
+      pill('flame', streak === 0 ? 'No week streak yet' : `${streak} week streak`, streak > 0 ? 'good' : ''),
+      checkinDue(bodyEntries, now) ? h('a', { class: 'pill link', href: '#body' }, icon('scale'), h('span', {}, 'Weekly check-in due')) : null),
 
     ramp ? h('div', { class: 'banner' }, RAMP_TEXT) : null,
 
     workoutCard,
+
+    ...checkins,
 
     card('This week',
       h('div', { class: 'rings' },

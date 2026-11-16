@@ -9,6 +9,7 @@ import * as settings from './views/settings.js';
 import * as program from './views/program.js';
 import * as workout from './views/workout.js';
 import * as summary from './views/summary.js';
+import * as bike from './views/bike.js';
 
 const TABS = [
   { id: 'today', label: 'Today' },
@@ -19,6 +20,7 @@ const TABS = [
 ];
 
 // tab: which tab is highlighted; null hides the tab bar (full-screen flows).
+// sticky: holds unsaved form input, so it is not re-rendered when the app returns to the foreground.
 const ROUTES = {
   today: { view: today, tab: 'today', title: 'Rebuild' },
   log: { view: log, tab: 'log', title: 'Log' },
@@ -27,7 +29,8 @@ const ROUTES = {
   settings: { view: settings, tab: 'settings', title: 'Settings' },
   program: { view: program, tab: 'settings', title: 'Program' },
   workout: { view: workout, tab: null, title: 'Workout' },
-  summary: { view: summary, tab: null, title: 'Summary' },
+  summary: { view: summary, tab: null, title: 'Summary', sticky: true },
+  bike: { view: bike, tab: null, title: 'Bike session', sticky: true },
 };
 
 const viewEl = document.getElementById('view');
@@ -121,7 +124,7 @@ async function boot() {
   // Refresh when the app comes back to the foreground (new day, new week), unless the user is mid-edit.
   document.addEventListener('visibilitychange', () => {
     const editing = document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName);
-    if (document.visibilityState === 'visible' && !document.querySelector('.sheet-wrap') && !editing) render();
+    if (document.visibilityState === 'visible' && !document.querySelector('.sheet-wrap') && !editing && !currentRoute().sticky) render();
   });
   await render();
   registerServiceWorker();

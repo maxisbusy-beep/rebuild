@@ -1,2 +1,2 @@
 // Must match VERSION in sw.js (tests/sw.test.js enforces this).
-export const APP_VERSION = '1.1.0';
+export const APP_VERSION = '1.2.0';

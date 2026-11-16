@@ -1,7 +1,7 @@
 // Service worker: precaches every app file so Rebuild works fully offline.
 // VERSION must match js/version.js. Bump both on every release so phones
 // pick up the new files (a test checks they agree).
-const VERSION = '1.1.0';
+const VERSION = '1.2.0';
 const CACHE = `rebuild-${VERSION}`;
 
 const PRECACHE = [
@@ -12,9 +12,14 @@ const PRECACHE = [
   'js/app.js',
   'js/backup.js',
   'js/backup-ui.js',
+  'js/bike.js',
+  'js/body.js',
+  'js/chart.js',
+  'js/daily.js',
   'js/dates.js',
   'js/db.js',
   'js/exercises.js',
+  'js/fields.js',
   'js/format.js',
   'js/program.js',
   'js/progression.js',
@@ -34,6 +39,8 @@ const PRECACHE = [
   'js/views/program.js',
   'js/views/workout.js',
   'js/views/summary.js',
+  'js/views/bike.js',
+  'js/views/checkins.js',
   'icons/icon.svg',
   'icons/icon-180.png',
   'icons/icon-192.png',
