@@ -1,0 +1,11 @@
+{
+  "name": "rebuild",
+  "private": true,
+  "type": "module",
+  "description": "Rebuild: personal fitness PWA. No build step; this file only lets Node run the tests.",
+  "scripts": {
+    "test": "node --test",
+    "serve": "node tools/serve.mjs",
+    "icons": "node tools/make-icons.mjs"
+  }
+}
