@@ -800,23 +800,42 @@ noscript { position: fixed; inset: 0; display: grid; place-items: center; paddin
 .fig-toggle { width: auto; min-height: 38px; padding: 0 var(--s4); gap: var(--s2); color: var(--dim); }
 .fig-toggle .icon svg { width: 16px; height: 16px; }
 
-/* Muscle map */
-.muscle-map { display: flex; flex-direction: column; gap: var(--s3); }
-.muscle-map > div:first-child {
-  background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--s3) 0;
+/* Muscle map: an anatomy chart shaded by how hard each group works */
+:root {
+  --use-most: #C9476A;
+  --use-mod: #E2823A;
+  --use-least: #EFC94C;
+  --body-base: #3C434D;
 }
-.bodymap { display: block; width: 100%; height: auto; max-height: 260px; }
-.bodymap .b { fill: #2B3038; }
-.bodymap .m { fill: transparent; }
-.bodymap .m.on { fill: rgba(200, 255, 46, 0.38); }
-.bodymap .m.on.primary { fill: var(--accent); }
-.bodymap .b-label { fill: var(--faint); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; font-family: var(--font); }
+.muscle-map { display: flex; flex-direction: column; gap: var(--s3); }
+.bodymap-frame {
+  background: var(--surface-2); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: var(--s3);
+}
+.bodymap { display: block; width: 100%; height: auto; }
+.bodymap .r { fill: var(--body-base); stroke: rgba(255, 255, 255, 0.3); stroke-width: 1.4; stroke-linejoin: round; }
+.bodymap .r.base { stroke: none; }
+.bodymap .r.most { fill: var(--use-most); }
+.bodymap .r.mod { fill: var(--use-mod); }
+.bodymap .r.least { fill: var(--use-least); }
+.bodymap .b-label {
+  fill: var(--dim); font-size: 16px; font-weight: 800; letter-spacing: 0.14em;
+  text-transform: uppercase; font-family: var(--font); stroke: none;
+}
+.tier-legend { display: flex; flex-wrap: wrap; gap: var(--s3); }
+.tier-key { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: 0.06em; }
+.tier-key i { width: 12px; height: 12px; border-radius: 3px; display: block; }
+.tier-key.most i { background: var(--use-most); }
+.tier-key.mod i { background: var(--use-mod); }
+.tier-key.least i { background: var(--use-least); }
 .muscle-chips { display: flex; flex-wrap: wrap; gap: var(--s2); }
 .mchip {
   font-size: 13px; font-weight: 700; padding: 5px 11px; border-radius: 999px;
   background: var(--surface-2); color: var(--dim); border: 1px solid var(--line);
 }
-.mchip.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.mchip.most { background: var(--use-most); color: #fff; border-color: var(--use-most); }
+.mchip.mod { background: rgba(226, 130, 58, 0.16); color: var(--use-mod); border-color: rgba(226, 130, 58, 0.45); }
+.mchip.least { background: rgba(239, 201, 76, 0.14); color: var(--use-least); border-color: rgba(239, 201, 76, 0.4); }
 
 @media (prefers-reduced-motion: reduce) {
   .anim-panel, .anim-backdrop { animation: none !important; }

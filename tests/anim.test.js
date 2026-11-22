@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { EXERCISES, MUSCLES } from '../js/exercises.js';
-import { animationFor, hasAnimation, MUSCLE_LABEL, STAND, VIEW, GROUND } from '../js/anim.js';
+import { animationFor, hasAnimation, muscleTiers, MUSCLE_LABEL, STAND, VIEW, GROUND } from '../js/anim.js';
 
 const ids = Object.keys(EXERCISES);
 
@@ -58,5 +58,23 @@ test('band exercises have an anchor to draw the band from', () => {
     if (a.equip !== 'band') continue;
     const between = a.archId === 'pullapart'; // the band runs hand to hand
     assert.ok(a.anchor || between, `${id}: band exercise without an anchor`);
+  }
+});
+
+test('every exercise has at least one most-used muscle, and every tier is labelled', () => {
+  for (const id of ids) {
+    const t = muscleTiers(id, EXERCISES[id]);
+    assert.ok(t.most.length >= 1, `${id}: no most-used muscle`);
+    for (const m of [...t.most, ...t.mod, ...t.least]) {
+      assert.ok(MUSCLE_LABEL[m], `${id}: muscle ${m} has no label`);
+    }
+  }
+});
+
+test('a muscle never appears in two usage tiers at once', () => {
+  for (const id of ids) {
+    const t = muscleTiers(id, EXERCISES[id]);
+    const all = [...t.most, ...t.mod, ...t.least];
+    assert.equal(all.length, new Set(all).size, `${id}: a muscle is in two tiers`);
   }
 });

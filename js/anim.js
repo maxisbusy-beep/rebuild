@@ -557,18 +557,71 @@ const NOTES = {
   bbcurl: 'A straight bar locks the wrists. If that bothers your wrists, use dumbbells instead.',
 };
 
-// Which side of the body each muscle group shows on.
-export const MUSCLE_VIEW = {
-  quads: 'front', hamstrings: 'back', glutes: 'back', calves: 'back',
-  chest: 'front', back: 'back', shoulders: 'front', biceps: 'front',
-  triceps: 'back', core: 'front',
+// Muscle groups that only get light, supporting work in a movement. These show as
+// "least used" on the body map. Anything the exercise already names outranks this.
+const LIGHT = {
+  hinge: ['forearms', 'core'],
+  slhinge: ['forearms', 'core', 'calves'],
+  deadliftFloor: ['forearms', 'core', 'quads'],
+  pullthrough: ['core'],
+  squat: ['core', 'calves'],
+  splitsquat: ['core', 'calves', 'hamstrings'],
+  splitsquatFloor: ['core', 'calves', 'hamstrings'],
+  revlunge: ['core', 'calves', 'hamstrings'],
+  stepup: ['core', 'calves', 'hamstrings'],
+  calfraise: ['core'],
+  hipthrust: ['core', 'quads'],
+  bridge: ['core', 'quads'],
+  plank: ['shoulders', 'glutes'],
+  sideplank: ['shoulders', 'glutes'],
+  deadbug: ['shoulders', 'quads'],
+  hollow: ['shoulders', 'quads'],
+  bench: ['core', 'shoulders'],
+  floorpress: ['core', 'shoulders'],
+  pushup: ['core', 'glutes'],
+  pike: ['core'],
+  bentrow: ['forearms', 'core', 'hamstrings'],
+  onearmrow: ['forearms', 'core'],
+  chinup: ['forearms', 'core'],
+  pulldown: ['forearms', 'core'],
+  facepull: ['forearms'],
+  pullapart: ['forearms'],
+  extrot: ['forearms'],
+  ohp: ['core', 'chest'],
+  hkpress: ['core', 'glutes'],
+  curl: ['forearms', 'shoulders'],
+  pushdown: ['forearms'],
+  skull: ['forearms'],
+  latraise: ['forearms'],
 };
 
+// Lifts where the first two muscles both drive the movement, so both read as "most used".
+const TWO_PRIME = new Set([
+  'rdl', 'dbrdl', 'slrdl', 'deadlift', 'sumodl', 'hipthrust', 'glutebridge', 'slhipthrust',
+  'bss', 'splitsquat', 'revlunge', 'stepup', 'goblet', 'frontsquat',
+  'dbbench', 'floorpress', 'dbfloorpress', 'cgfloorpress', 'pushup', 'elevpushup',
+  'chinup', 'bandchin', 'chinneg', 'bbrow', 'dbrow', 'dbbentrow',
+  'dbohp', 'hkpress', 'pike', 'bandohp',
+]);
+
 export const MUSCLE_LABEL = {
-  quads: 'Quads', hamstrings: 'Hamstrings', glutes: 'Glutes', calves: 'Calves',
+  quads: 'Quadriceps', hamstrings: 'Hamstrings', glutes: 'Glutes', calves: 'Calves',
   chest: 'Chest', back: 'Back', shoulders: 'Shoulders', biceps: 'Biceps',
-  triceps: 'Triceps', core: 'Core',
+  triceps: 'Triceps', core: 'Core', forearms: 'Forearms',
 };
+
+/**
+ * How hard each muscle group works in one exercise, in three tiers.
+ * The exercise's own muscle list sets the first two tiers; LIGHT adds the third.
+ */
+export function muscleTiers(id, ex) {
+  const listed = ex.muscles;
+  const primeCount = TWO_PRIME.has(id) && listed.length > 1 ? 2 : 1;
+  const most = listed.slice(0, primeCount);
+  const mod = listed.slice(primeCount);
+  const least = (LIGHT[MAP[id]] || []).filter((m) => !listed.includes(m));
+  return { most, mod, least: [...new Set(least)] };
+}
 
 /** The movement data for an exercise id, or null when there is none. */
 export function animationFor(id, ex) {

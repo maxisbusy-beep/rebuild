@@ -3,7 +3,7 @@
 // an exercise name.
 
 import { EXERCISES } from './exercises.js';
-import { animationFor, hasAnimation, MUSCLE_LABEL, SEG, STAND, GROUND, VIEW } from './anim.js';
+import { animationFor, hasAnimation, muscleTiers, MUSCLE_LABEL, SEG, STAND, GROUND, VIEW } from './anim.js';
 import { h, icon } from './ui.js';
 
 export { hasAnimation };
@@ -186,60 +186,131 @@ function figure(anim) {
 }
 
 // ---------------------------------------------------------------- muscle map
+//
+// A front and back anatomy chart. Each muscle group is an outlined region that is
+// shaded by how hard the exercise works it: most, moderately or least used.
+// Only one half of the body is described; the other half is the mirror image.
 
-/** One body outline with a highlight layer per muscle group. */
-function bodySvg(view, cx, muscles) {
-  const prim = muscles[0];
-  const cls = (m) => `m m-${m}` + (muscles.includes(m) ? (m === prim ? ' on primary' : ' on') : '');
-  const r = (m, x, y, w, hh, rx = 5) => `<rect class="${cls(m)}" x="${n1(cx + x)}" y="${y}" width="${w}" height="${hh}" rx="${rx}"/>`;
-  const base = [
-    `<circle class="b" cx="${cx}" cy="20" r="11"/>`,
-    `<rect class="b" x="${cx - 5}" y="28" width="10" height="8" rx="3"/>`,
-    `<rect class="b" x="${cx - 17}" y="34" width="34" height="46" rx="10"/>`,
-    `<rect class="b" x="${cx - 15}" y="74" width="30" height="20" rx="7"/>`,
-    `<ellipse class="b" cx="${cx - 20}" cy="41" rx="9" ry="8"/>`,
-    `<ellipse class="b" cx="${cx + 20}" cy="41" rx="9" ry="8"/>`,
-    `<rect class="b" x="${cx - 28}" y="44" width="10" height="30" rx="5"/>`,
-    `<rect class="b" x="${cx + 18}" y="44" width="10" height="30" rx="5"/>`,
-    `<rect class="b" x="${cx - 29}" y="70" width="9" height="30" rx="4.5"/>`,
-    `<rect class="b" x="${cx + 20}" y="70" width="9" height="30" rx="4.5"/>`,
-    `<rect class="b" x="${cx - 15}" y="90" width="14" height="42" rx="7"/>`,
-    `<rect class="b" x="${cx + 1}" y="90" width="14" height="42" rx="7"/>`,
-    `<rect class="b" x="${cx - 14}" y="128" width="12" height="38" rx="6"/>`,
-    `<rect class="b" x="${cx + 2}" y="128" width="12" height="38" rx="6"/>`,
-    `<ellipse class="b" cx="${cx - 8}" cy="168" rx="7" ry="4"/>`,
-    `<ellipse class="b" cx="${cx + 8}" cy="168" rx="7" ry="4"/>`,
-  ].join('');
-
-  const shoulders = `<ellipse class="${cls('shoulders')}" cx="${cx - 20}" cy="41" rx="8" ry="7"/>`
-    + `<ellipse class="${cls('shoulders')}" cx="${cx + 20}" cy="41" rx="8" ry="7"/>`;
-  const calves = r('calves', -13, 130, 10, 26, 5) + r('calves', 3, 130, 10, 26, 5);
-
-  const front = shoulders
-    + r('chest', -15, 36, 14, 18, 6) + r('chest', 1, 36, 14, 18, 6)
-    + r('core', -11, 56, 22, 26, 6)
-    + r('biceps', -26, 46, 8, 20, 4) + r('biceps', 18, 46, 8, 20, 4)
-    + r('quads', -14, 92, 12, 38, 6) + r('quads', 2, 92, 12, 38, 6)
-    + calves;
-
-  const back = shoulders
-    + r('back', -16, 35, 32, 30, 9)
-    + r('triceps', -26, 46, 8, 20, 4) + r('triceps', 18, 46, 8, 20, 4)
-    + r('glutes', -14, 75, 13, 19, 6) + r('glutes', 1, 75, 13, 19, 6)
-    + r('hamstrings', -14, 94, 12, 34, 6) + r('hamstrings', 2, 94, 12, 34, 6)
-    + calves;
-
-  return base + (view === 'front' ? front : back)
-    + `<text class="b-label" x="${cx}" y="182" text-anchor="middle">${view === 'front' ? 'Front' : 'Back'}</text>`;
+/** A closed, smooth outline through the given points (Catmull-Rom as cubic curves). */
+function blob(pts) {
+  const n = pts.length;
+  let d = `M${n1(pts[0][0])} ${n1(pts[0][1])}`;
+  for (let i = 0; i < n; i++) {
+    const p0 = pts[(i - 1 + n) % n], p1 = pts[i], p2 = pts[(i + 1) % n], p3 = pts[(i + 2) % n];
+    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+    const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+    d += `C${n1(c1[0])} ${n1(c1[1])} ${n1(c2[0])} ${n1(c2[1])} ${n1(p2[0])} ${n1(p2[1])}`;
+  }
+  return d + 'Z';
 }
 
-function muscleMap(muscles) {
-  const markup = `<svg viewBox="0 0 200 190" class="bodymap" role="img" aria-label="Muscles worked: ${muscles.map((m) => MUSCLE_LABEL[m] || m).join(', ')}">`
-    + bodySvg('front', 52, muscles) + bodySvg('back', 148, muscles) + '</svg>';
+// Shared between both views: the parts that are not a tracked muscle group.
+const NEUTRAL = {
+  neck: [[-9, 50], [-11, 74], [11, 74], [9, 50]],
+  hand: [[-51, 262], [-63, 270], [-62, 289], [-51, 295], [-45, 282], [-47, 268]],
+  pelvis: [[-4, 240], [-24, 236], [-36, 252], [-32, 276], [-7, 274]],
+  knee: [[-11, 346], [-31, 343], [-33, 366], [-13, 370]],
+  foot: [[-15, 420], [-32, 421], [-38, 439], [-11, 441]],
+};
+
+// The upper arm and forearm sit in the same place on both views.
+const ARM = {
+  upper: [[-46, 130], [-58, 140], [-61, 170], [-54, 196], [-45, 189], [-43, 150]],
+  fore: [[-48, 196], [-61, 206], [-66, 236], [-59, 262], [-51, 256], [-48, 214]],
+};
+const DELT = [[-34, 80], [-50, 88], [-58, 108], [-52, 128], [-40, 124], [-33, 98]];
+
+// A plain grey body under the muscle regions, so there are no gaps between them.
+// It crosses the midline a little; both halves overlap and it carries no outline.
+const BASE = [
+  [[4, 52], [-10, 54], [-9, 68], [-28, 74], [-48, 94], [-43, 126],
+    [-37, 160], [-34, 205], [-38, 248], [-35, 276], [4, 280]],
+  [[-4, 256], [-30, 260], [-40, 300], [-34, 345], [-35, 398], [-30, 428], [-39, 442],
+    [-9, 444], [-6, 400], [-5, 330], [-4, 286]],
+  [[-34, 96], [-53, 102], [-62, 152], [-68, 212], [-65, 252], [-63, 292], [-45, 296],
+    [-41, 250], [-44, 200], [-39, 150], [-32, 120]],
+];
+
+// The figure's own right side, drawn at negative x and mirrored for the other half.
+const FRONT = [
+  { m: null, pts: NEUTRAL.pelvis },
+  { m: 'back', pts: [[-7, 58], [-26, 68], [-42, 88], [-28, 94], [-11, 78]] },        // upper trapezius
+  { m: 'chest', pts: [[-5, 86], [-28, 83], [-44, 97], [-43, 120], [-26, 134], [-6, 130]] },
+  { m: 'shoulders', pts: DELT },
+  { m: 'core', pts: [[-24, 142], [-35, 156], [-37, 190], [-28, 220], [-22, 205], [-22, 158]] }, // obliques
+  { m: 'core', pts: [[-4, 140], [-21, 141], [-23, 160], [-4, 161]] },
+  { m: 'core', pts: [[-4, 166], [-22, 166], [-24, 185], [-4, 186]] },
+  { m: 'core', pts: [[-4, 191], [-23, 191], [-24, 210], [-4, 211]] },
+  { m: 'core', pts: [[-4, 216], [-23, 216], [-19, 242], [-4, 244]] },
+  { m: 'biceps', pts: ARM.upper },
+  { m: 'forearms', pts: ARM.fore },
+  { m: null, pts: NEUTRAL.hand },
+  { m: 'quads', pts: [[-6, 266], [-30, 264], [-39, 300], [-34, 342], [-20, 350], [-11, 318], [-7, 286]] },
+  { m: null, pts: NEUTRAL.knee },
+  { m: null, pts: [[-13, 368], [-29, 363], [-34, 396], [-26, 424], [-17, 420], [-12, 388]] }, // shin
+  { m: null, pts: NEUTRAL.foot },
+];
+
+const BACK = [
+  { m: null, pts: NEUTRAL.pelvis },
+  { m: 'back', pts: [[-3, 56], [-24, 68], [-40, 90], [-25, 116], [-4, 134]] },       // trapezius
+  { m: 'back', pts: [[-8, 134], [-36, 130], [-44, 162], [-27, 196], [-9, 188]] },    // latissimus dorsi
+  { m: 'back', pts: [[-20, 112], [-39, 110], [-42, 128], [-25, 143], [-17, 132]] },  // infraspinatus, teres
+  { m: 'back', pts: [[-2, 132], [-13, 138], [-15, 190], [-8, 222], [-2, 221]] },     // erector spinae
+  { m: 'shoulders', pts: DELT },
+  { m: 'triceps', pts: ARM.upper },
+  { m: 'forearms', pts: ARM.fore },
+  { m: null, pts: NEUTRAL.hand },
+  { m: 'glutes', pts: [[-5, 230], [-29, 228], [-40, 250], [-33, 278], [-8, 277]] },
+  { m: 'hamstrings', pts: [[-8, 278], [-33, 277], [-39, 312], [-31, 346], [-17, 348], [-9, 310]] },
+  { m: null, pts: NEUTRAL.knee },
+  { m: 'calves', pts: [[-13, 364], [-31, 361], [-35, 393], [-25, 424], [-16, 418], [-12, 383]] },
+  { m: null, pts: NEUTRAL.foot },
+];
+
+/** One figure: mirrored halves plus the head and neck down the middle. */
+function bodySvg(view, cx, tierOf) {
+  const regions = view === 'front' ? FRONT : BACK;
+  const base = BASE.map((pts) => `<path class="r base" d="${blob(pts)}"/>`).join('');
+  const half = regions.map((r) => {
+    const t = r.m ? tierOf(r.m) : '';
+    return `<path class="r${t ? ' ' + t : ''}" d="${blob(r.pts)}"/>`;
+  }).join('');
+  const neck = `<path class="r" d="${blob(NEUTRAL.neck)}"/>`;
+  return `<g transform="translate(${cx} 0)">`
+    + neck
+    + `<ellipse class="r" cx="0" cy="30" rx="20" ry="26"/>`
+    + `<g>${base}</g><g transform="scale(-1 1)">${base}</g>`
+    + `<g>${half}</g><g transform="scale(-1 1)">${half}</g>`
+    + `<text class="b-label" x="0" y="468" text-anchor="middle">${view === 'front' ? 'Front' : 'Back'}</text>`
+    + '</g>';
+}
+
+const TIER_LABEL = { most: 'Most used', mod: 'Moderately used', least: 'Least used' };
+
+function muscleMap(tiers) {
+  const tierOf = (m) => (tiers.most.includes(m) ? 'most' : tiers.mod.includes(m) ? 'mod'
+    : tiers.least.includes(m) ? 'least' : '');
+  const named = (list) => list.map((m) => MUSCLE_LABEL[m] || m).join(', ');
+  const alt = `Muscles worked. Most used: ${named(tiers.most) || 'none'}.`
+    + (tiers.mod.length ? ` Moderately used: ${named(tiers.mod)}.` : '')
+    + (tiers.least.length ? ` Least used: ${named(tiers.least)}.` : '');
+
+  const markup = `<svg viewBox="0 0 380 486" class="bodymap" role="img" aria-label="${alt}">`
+    + bodySvg('front', 96, tierOf) + bodySvg('back', 284, tierOf) + '</svg>';
+
+  const legend = h('div', { class: 'tier-legend' }, ['most', 'mod', 'least']
+    .filter((t) => (t === 'most' ? tiers.most : t === 'mod' ? tiers.mod : tiers.least).length)
+    .map((t) => h('span', { class: `tier-key ${t}` }, h('i', {}), TIER_LABEL[t])));
+
+  const group = (t, list) => list.map((m) =>
+    h('span', { class: `mchip ${t}` }, MUSCLE_LABEL[m] || m));
+
   return h('div', { class: 'muscle-map' },
-    h('div', { html: markup }),
-    h('div', { class: 'muscle-chips' }, muscles.map((m, i) =>
-      h('span', { class: `mchip ${i === 0 ? 'primary' : ''}`.trim() }, MUSCLE_LABEL[m] || m))));
+    h('div', { class: 'bodymap-frame', html: markup }),
+    legend,
+    h('div', { class: 'muscle-chips' },
+      group('most', tiers.most), group('mod', tiers.mod), group('least', tiers.least)));
 }
 
 // ---------------------------------------------------------------- the modal
@@ -278,7 +349,7 @@ export function openAnimation(exId) {
         fig.el,
         h('section', { class: 'anim-sec' },
           h('h3', { class: 'anim-h3' }, 'Muscles worked'),
-          muscleMap(anim.muscles)),
+          muscleMap(muscleTiers(exId, ex))),
         h('section', { class: 'anim-sec' },
           h('h3', { class: 'anim-h3' }, 'How to do it'),
           h('p', { class: 'anim-cue' }, anim.cue),
