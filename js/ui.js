@@ -46,6 +46,9 @@ export const ICONS = {
   plus: svg('<path d="M12 6v12M6 12h12"/>'),
   barbell: svg('<path d="M2.500 12h19"/><path d="M6 7v10M9 5v14M15 5v14M18 7v10"/>'),
   bike: svg('<circle cx="6" cy="16.500" r="3.500"/><circle cx="18" cy="16.500" r="3.500"/><path d="M6 16.500 10 8h5l3 8.500"/><path d="M8.500 11h7.500"/><path d="M9 8H7"/>'),
+  play: svg('<path d="M8 5.5 18.5 12 8 18.5z"/>'),
+  pause: svg('<path d="M9.5 6v12M14.5 6v12"/>'),
+  close: svg('<path d="M6 6l12 12M18 6 6 18"/>'),
   scale: svg('<rect x="4" y="4" width="16" height="16" rx="3.500"/><path d="M8.500 9.500a5 5 0 0 1 7 0"/><path d="m12 12 1.500-2.500"/>'),
 };
 

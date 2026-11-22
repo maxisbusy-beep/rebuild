@@ -12,6 +12,7 @@ import { prettyDate, parseYmd } from '../dates.js';
 import { h, icon, sheet, toast, stepper, segmented } from '../ui.js';
 import { RAMP_TEXT } from './today.js';
 import { DELOAD_TEXT } from '../deload.js';
+import { animationButton } from '../anim-ui.js';
 
 // Rest timer state lives outside render() so it survives screen refreshes.
 let rest = null; // { endsAt, total, firedAt }
@@ -123,6 +124,7 @@ export async function render(root, { refresh }) {
           h('h2', { class: 'ex-name' }, ex.name),
           h('div', { class: 'ex-rx' }, rxText(e, ex))),
         h('button', { class: 'icon-btn', 'aria-label': `Swap ${ex.name}`, onclick: () => swap(ei) }, icon('swap'))),
+      h('div', { class: 'ex-actions' }, animationButton(e.exId)),
       h('p', { class: 'ex-cue' }, ex.cue),
       h('div', { class: 'ex-last' },
         h('span', { class: 'ex-last-label' }, 'Last'),

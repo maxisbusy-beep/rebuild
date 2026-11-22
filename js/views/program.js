@@ -2,6 +2,7 @@
 import { loadProgram, saveProgram, defaultProgram, normalizeItem, swapItem, rxLabel, DEFAULT_PROGRAM } from '../program.js';
 import { EXERCISES } from '../exercises.js';
 import { h, icon, sheet, toast, stepper, card } from '../ui.js';
+import { animationButton } from '../anim-ui.js';
 
 export async function render(root, { refresh }) {
   const program = await loadProgram();
@@ -29,6 +30,7 @@ export async function render(root, { refresh }) {
     const draft = { ...it };
     const body = h('div', { class: 'edit-set' },
       h('p', { class: 'sheet-text dim' }, ex.cue),
+      h('div', { class: 'ex-actions' }, animationButton(it.exId)),
       stepper({ label: 'Sets', value: draft.sets, min: 1, max: 8, onChange: (v) => { draft.sets = v; } }),
       ex.mode === 'reps' ? stepper({ label: 'Reps from', value: draft.repMin, min: 1, max: 50, onChange: (v) => { draft.repMin = v; } }) : null,
       ex.mode === 'reps' ? stepper({ label: 'Reps to', value: draft.repMax, min: 1, max: 50, onChange: (v) => { draft.repMax = v; } }) : null,

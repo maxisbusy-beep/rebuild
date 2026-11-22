@@ -14,6 +14,7 @@ import { checkinDue } from '../body.js';
 import { checkinCards } from './checkins.js';
 import { loadDeload, saveDeload, deloadStatus, startDeload, endDeload, skipDeload, DELOAD_TEXT } from '../deload.js';
 import { h, icon, ring, card, pageHeader, pill } from '../ui.js';
+import { animationButton } from '../anim-ui.js';
 
 export const RAMP_TEXT = 'Ramp weeks: keep 3+ reps in reserve, tendons adapt slower than muscle.';
 
@@ -49,7 +50,11 @@ export async function render(root, { refresh }) {
       h('div', { class: 'kicker' }, 'Next workout'),
       h('div', { class: 'next-name' }, next.name),
       h('ul', { class: 'rx-list' }, next.items.map((it) =>
-        h('li', {}, h('span', { class: 'rx-name' }, EXERCISES[it.exId].name), h('span', { class: 'rx-sets' }, rxLabel(it))))),
+        h('li', { class: 'with-anim' },
+          h('div', { class: 'rx-row' },
+            h('span', { class: 'rx-name' }, EXERCISES[it.exId].name),
+            h('span', { class: 'rx-sets' }, rxLabel(it))),
+          animationButton(it.exId, 'tiny')))),
       h('button', { class: 'btn primary big', onclick: start }, 'Start'),
       h('div', { class: 'btn-row' },
         h('a', { class: 'btn', href: '#bike' }, icon('bike'), 'Bike instead'),

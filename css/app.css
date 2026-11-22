@@ -712,3 +712,112 @@ noscript { position: fixed; inset: 0; display: grid; place-items: center; paddin
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; }
 }
+
+/* ---------- Animation viewer ---------- */
+
+.ex-actions { display: flex; gap: var(--s2); margin-top: calc(var(--s1) * -1); }
+.btn.anim-btn {
+  width: auto; min-height: 36px; padding: 0 var(--s3);
+  gap: var(--s2); font-size: 14px; font-weight: 700;
+  color: var(--accent); background: var(--accent-soft);
+  border: 1px solid rgba(200, 255, 46, 0.28); border-radius: 999px;
+}
+.btn.anim-btn .icon svg { width: 16px; height: 16px; }
+.btn.anim-btn.tiny { min-height: 32px; font-size: 13px; padding: 0 10px; margin-top: 6px; align-self: flex-start; }
+.rx-list li.with-anim { flex-direction: column; align-items: stretch; }
+.rx-row { display: flex; justify-content: space-between; gap: var(--s3); align-items: baseline; }
+
+.anim-wrap { position: fixed; inset: 0; z-index: 70; display: flex; align-items: flex-end; justify-content: center; }
+.anim-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.72); animation: fade-in 180ms ease both; }
+.anim-panel {
+  position: relative;
+  width: 100%; max-width: 560px; height: 94%;
+  background: var(--surface);
+  border: 1px solid var(--line); border-bottom: 0;
+  border-radius: 24px 24px 0 0;
+  display: flex; flex-direction: column;
+  animation: sheet-in 260ms var(--ease) both;
+  overflow: hidden;
+}
+.anim-wrap.leaving .anim-panel { animation: sheet-out 200ms ease both; }
+.anim-wrap.leaving .anim-backdrop { animation: fade-out 200ms ease both; }
+.anim-head {
+  display: flex; align-items: flex-start; gap: var(--s3);
+  padding: var(--s4) var(--s4) var(--s3);
+  border-bottom: 1px solid var(--line);
+}
+.anim-titles { flex: 1; min-width: 0; }
+.anim-kicker { font-size: 12px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.anim-name { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; margin: 2px 0 0; }
+.anim-body {
+  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: var(--s4) var(--s4) calc(var(--s6) + var(--safe-b));
+  display: flex; flex-direction: column; gap: var(--s5);
+}
+.anim-sec { display: flex; flex-direction: column; gap: var(--s3); }
+.anim-h3 { font-size: 13px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); margin: 0; }
+.anim-cue { margin: 0; font-size: 16px; font-weight: 600; color: var(--text); }
+.anim-steps { margin: 0; padding-left: 0; list-style: none; counter-reset: step; display: flex; flex-direction: column; gap: var(--s3); }
+.anim-steps li {
+  counter-increment: step;
+  position: relative; padding-left: 36px;
+  font-size: 15px; line-height: 1.5; color: var(--dim);
+}
+.anim-steps li::before {
+  content: counter(step);
+  position: absolute; left: 0; top: 0;
+  width: 24px; height: 24px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--surface-2); color: var(--accent);
+  font-size: 13px; font-weight: 800;
+}
+.anim-note { margin: 0; font-size: 14px; color: var(--text); background: var(--surface-2); border-radius: var(--radius-sm); padding: var(--s3); }
+.anim-avoid {
+  display: flex; flex-direction: column; gap: var(--s1);
+  background: var(--red-soft); border: 1px solid rgba(255, 90, 82, 0.3);
+  border-radius: var(--radius-sm); padding: var(--s3);
+  font-size: 14px; line-height: 1.5; color: var(--text);
+}
+.anim-avoid-label { font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--red); }
+
+/* The stick figure */
+.fig-wrap { display: flex; flex-direction: column; align-items: center; gap: var(--s2); }
+.fig-svg { width: 100%; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius); }
+.fig { display: block; width: 100%; height: auto; }
+.fig-spine, .fig-limb { stroke: var(--accent); stroke-width: 7; stroke-linecap: round; fill: none; }
+.fig-foot { stroke: var(--accent); stroke-width: 6; stroke-linecap: round; fill: none; }
+.fig-limb.far, .fig-foot.far { stroke: var(--accent); opacity: 0.32; }
+.fig-head { fill: var(--accent); }
+.fig-ground { stroke: var(--line); stroke-width: 3; stroke-linecap: round; }
+.fig-prop { fill: var(--line); }
+.fig-plate { fill: var(--text); }
+.fig-plate-hub { fill: var(--surface-2); }
+.fig-db { fill: var(--text); }
+.fig-band { stroke: var(--amber); stroke-width: 3; fill: none; stroke-dasharray: 7 5; }
+.fig-anchor { fill: var(--amber); }
+.fig-phase { font-size: 15px; font-weight: 700; color: var(--text); text-align: center; min-height: 22px; }
+.fig-controls { display: flex; justify-content: center; }
+.fig-toggle { width: auto; min-height: 38px; padding: 0 var(--s4); gap: var(--s2); color: var(--dim); }
+.fig-toggle .icon svg { width: 16px; height: 16px; }
+
+/* Muscle map */
+.muscle-map { display: flex; flex-direction: column; gap: var(--s3); }
+.muscle-map > div:first-child {
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--s3) 0;
+}
+.bodymap { display: block; width: 100%; height: auto; max-height: 260px; }
+.bodymap .b { fill: #2B3038; }
+.bodymap .m { fill: transparent; }
+.bodymap .m.on { fill: rgba(200, 255, 46, 0.38); }
+.bodymap .m.on.primary { fill: var(--accent); }
+.bodymap .b-label { fill: var(--faint); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; font-family: var(--font); }
+.muscle-chips { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.mchip {
+  font-size: 13px; font-weight: 700; padding: 5px 11px; border-radius: 999px;
+  background: var(--surface-2); color: var(--dim); border: 1px solid var(--line);
+}
+.mchip.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-panel, .anim-backdrop { animation: none !important; }
+}
