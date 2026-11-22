@@ -1,7 +1,7 @@
 // Service worker: precaches every app file so Rebuild works fully offline.
 // VERSION must match js/version.js. Bump both on every release so phones
 // pick up the new files (a test checks they agree).
-const VERSION = '1.4.0';
+const VERSION = '1.4.1';
 const CACHE = `rebuild-${VERSION}`;
 
 const PRECACHE = [
